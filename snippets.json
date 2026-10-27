@@ -2,6 +2,7 @@
   "_config": {
     "title": "My Snippets",
     "groupBy": "section",
+    "recent": 6,
     "tags": {
       "dev":      { "label": "Dev",        "color": "green", "icon": "🛠" },
       "staging":  { "label": "Staging",    "color": "amber", "icon": "🧪" },
