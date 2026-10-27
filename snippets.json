@@ -1,19 +1,58 @@
 {
-  "Email sign-off": "Best regards,\nYour Name",
-  "Work email": "you@example.com",
-  "Phone": "+1 (555) 010-0100",
-  "Home address": "123 Example Street, Springfield, USA",
+  "_config": {
+    "title": "My Snippets",
+    "groupBy": "section",
+    "tags": {
+      "dev":      { "label": "Dev",        "color": "green", "icon": "🛠" },
+      "staging":  { "label": "Staging",    "color": "amber", "icon": "🧪" },
+      "prod":     { "label": "Production", "color": "red",   "icon": "🚨" },
+      "personal": { "label": "Personal",   "color": "pink",  "icon": "🙂" }
+    }
+  },
 
-  "Dev": {
-    "Git: undo last commit": "git reset --soft HEAD~1",
-    "Git: pretty log": "git log --oneline --graph --decorate --all",
-    "Docker: stop all": "docker stop $(docker ps -q)",
-    "Today's date": "{date}",
-    "Timestamp (ISO)": "{iso}"
+  "Today's date": "{date}",
+
+  "Personal": {
+    "_icon": "🙂",
+    "_color": "pink",
+    "_tags": ["personal"],
+    "Email sign-off": "Best regards,\nYour Name",
+    "Work email": "you@example.com",
+    "Phone": "+1 (555) 010-0100",
+    "🔒 Home address": "123 Example Street, Springfield, USA"
+  },
+
+  "Servers": {
+    "_icon": "🖥",
+    "SSH dev box":     { "value": "ssh you@dev.example.com",     "tags": ["dev"],     "color": "green" },
+    "SSH staging":     { "value": "ssh you@staging.example.com", "tags": ["staging"], "color": "amber" },
+    "SSH production":  { "value": "ssh you@prod.example.com",    "tags": ["prod"],    "color": "red", "icon": "🚨" },
+    "Tail prod logs":  { "value": "kubectl logs -f deploy/api -n production", "tags": ["prod"], "color": "red" },
+    "Dev API URL":     { "value": "https://api.dev.example.com",     "tags": ["dev"] },
+    "Staging API URL": { "value": "https://api.staging.example.com", "tags": ["staging"] }
+  },
+
+  "Git & Docker": {
+    "_icon": "💻",
+    "_tags": ["dev"],
+    "Undo last commit": "git reset --soft HEAD~1",
+    "Pretty log": "git log --oneline --graph --decorate --all",
+    "Stop all containers": "docker stop $(docker ps -q)",
+    "Clean Docker": { "value": "docker system prune -af --volumes", "icon": "🧹", "color": "slate" }
   },
 
   "Replies": {
+    "_icon": "💬",
     "Thanks": "Thanks for reaching out! I'll get back to you shortly.",
-    "Meeting follow-up": "Following up on our meeting on {date}. Summary and next steps below:\n\n- \n- "
+    "Meeting follow-up": [
+      "Following up on our meeting on {date}.",
+      "",
+      "Summary:",
+      "- ",
+      "",
+      "Next steps:",
+      "- "
+    ],
+    "Out of office": "I'm out of the office until <date> with limited access to email."
   }
 }
