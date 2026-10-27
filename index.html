@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snippet Tiles</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --text:#1c1f26; --muted:#6b7280; --accent:#2f6fed; --ok:#16a34a; --border:#e3e6ec; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#14161a; --card:#1f2229; --text:#e8eaee; --muted:#9aa1ad; --accent:#6c9bff; --ok:#4ade80; --border:#2d313a; } }
+  :root[data-theme=light] { --bg:#f5f6f8; --card:#fff; --text:#1c1f26; --muted:#6b7280; --accent:#2f6fed; --ok:#16a34a; --border:#e3e6ec; }
+  :root[data-theme=dark] { --bg:#14161a; --card:#1f2229; --text:#e8eaee; --muted:#9aa1ad; --accent:#6c9bff; --ok:#4ade80; --border:#2d313a; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); padding:14px 16px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border); }
+  h1 { font-size:17px; margin:0 8px 0 0; white-space:nowrap }
+  #q { flex:1; min-width:0; padding:9px 12px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:15px; }
+  #q:focus { outline:2px solid var(--accent); }
+  button.ghost { background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 11px; cursor:pointer; font-size:14px; }
+  button.ghost:hover { border-color:var(--accent); }
+  main { padding:8px 16px 60px; max-width:1200px; margin:0 auto; }
+  h2 { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:22px 0 8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; }
+  .tile { position:relative; text-align:left; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:14px 34px 14px 14px; min-height:62px; cursor:pointer; font:inherit; font-weight:600; transition:transform .06s, border-color .15s, background .15s; }
+  .tile:hover, .tile:focus-visible { border-color:var(--accent); outline:none; }
+  .tile:active { transform:scale(.97); }
+  .tile small { display:block; font-weight:400; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile.copied { background:var(--ok); border-color:var(--ok); color:#fff; }
+  .tile.copied small { color:#fff; }
+  .pin { position:absolute; top:6px; right:6px; border:0; background:none; cursor:pointer; font-size:15px; opacity:.25; padding:2px 4px; color:var(--text); }
+  .tile:hover .pin, .pin.on { opacity:1; }
+  #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:9px 16px; border-radius:20px; opacity:0; pointer-events:none; transition:.2s; max-width:90vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #toast.show { opacity:1; transform:translateX(-50%); }
+  #empty { text-align:center; color:var(--muted); padding:60px 16px; display:none }
+  #empty button { margin-top:12px; background:var(--accent); color:#fff; border:0; border-radius:10px; padding:10px 16px; cursor:pointer; font-size:15px; }
+  #drop { position:fixed; inset:0; background:color-mix(in srgb,var(--accent) 20%,transparent); border:3px dashed var(--accent); display:none; align-items:center; justify-content:center; font-size:22px; z-index:10; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 Snippets</h1>
+  <input id="q" type="search" placeholder="Search…  ( / to focus, Enter copies first match )" autocomplete="off">
+  <button class="ghost" id="open" title="Load a snippets.json from disk">Load JSON</button>
+  <button class="ghost" id="theme" title="Toggle theme">◐</button>
+</header>
+<main>
+  <div id="app"></div>
+  <div id="empty">
+    <p id="emptyMsg">No snippets found.</p>
+    <button id="open2">Choose snippets.json</button>
+  </div>
+</main>
+<div id="toast"></div>
+<div id="drop">Drop snippets.json here</div>
+<input id="file" type="file" accept=".json,application/json" hidden>
+
+<script>
+/*
+  snippets.json format:
+    "Tile name": "value to copy"                      -> a tile
+    "Group name": { "Tile name": "value", ... }       -> a titled section of tiles
+  Placeholders in values: {date} {time} {datetime} {iso}
+  Start a tile name with "🔒" to hide its value preview on screen (and exclude it from search).
+*/
+const $ = s => document.querySelector(s);
+const LS = { get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } },
+             set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} } };
+let groups = [];           // [{name, items:[{key,value}]}]
+let pins = new Set(LS.get('pins', []));
+let toastTimer;
+
+function parse(data) {
+  const root = { name:'', items:[] }, out = [root];
+  for (const [k,v] of Object.entries(data)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      out.push({ name:k, items:Object.entries(v).map(([key,value]) => ({ key, value:String(value) })) });
+    } else root.items.push({ key:k, value:Array.isArray(v) ? v.join('\n') : String(v) });
+  }
+  return out.filter(g => g.items.length);
+}
+
+function expand(text) {
+  const d = new Date(), p = n => String(n).padStart(2,'0');
+  const date = `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+  const time = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  return text.replace(/\{(date|time|datetime|iso)\}/g, (_,t) =>
+    t==='date' ? date : t==='time' ? time : t==='datetime' ? `${date} ${time}` : d.toISOString());
+}
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = 0;
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch {}
+  ta.remove(); return ok;
+}
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+async function onTile(btn, item) {
+  const ok = await copy(expand(item.value));
+  toast(ok ? `Copied: ${item.key.replace(/^🔒\s*/,'')}` : 'Copy failed — browser blocked clipboard');
+  if (ok) { btn.classList.add('copied'); setTimeout(() => btn.classList.remove('copied'), 700); }
+}
+
+function render() {
+  const q = $('#q').value.trim().toLowerCase();
+  const app = $('#app'); app.innerHTML = '';
+  const match = i => !q || i.key.toLowerCase().includes(q) || (!i.key.startsWith('🔒') && i.value.toLowerCase().includes(q));
+  const all = groups.flatMap(g => g.items.map(i => ({ ...i, group:g.name })));
+  const pinned = all.filter(i => pins.has(i.group+'\u0000'+i.key) && match(i));
+  const sections = [];
+  if (pinned.length) sections.push({ name:'★ Pinned', items:pinned });
+  for (const g of groups) { const items = g.items.filter(match); if (items.length) sections.push({ name:g.name, items, g:g.name }); }
+  for (const s of sections) {
+    if (s.name) { const h = document.createElement('h2'); h.textContent = s.name; app.appendChild(h); }
+    const grid = document.createElement('div'); grid.className = 'grid';
+    for (const item of s.items) {
+      const grp = s.g ?? item.group, id = grp+'\u0000'+item.key;
+      const b = document.createElement('div'); // wrapper so pin button isn't nested in a button
+      const btn = document.createElement('button'); btn.className = 'tile'; btn.type = 'button';
+      btn.dataset.copy = '1';
+      btn.append(document.createTextNode(item.key));
+      if (!item.key.startsWith('🔒')) { const sm = document.createElement('small'); sm.textContent = item.value.replace(/\s+/g,' '); btn.appendChild(sm); }
+      btn.onclick = () => onTile(btn, item);
+      const pin = document.createElement('span'); pin.className = 'pin' + (pins.has(id) ? ' on' : ''); pin.textContent = pins.has(id) ? '★' : '☆'; pin.title = 'Pin to top';
+      pin.onclick = e => { e.stopPropagation(); pins.has(id) ? pins.delete(id) : pins.add(id); LS.set('pins',[...pins]); render(); };
+      btn.appendChild(pin); grid.appendChild(btn);
+    }
+    app.appendChild(grid);
+  }
+  $('#empty').style.display = sections.length ? 'none' : 'block';
+  $('#emptyMsg').textContent = groups.length ? 'No matches.' : 'Could not auto-load snippets.json (browsers block this on file:// pages). Choose or drop the file once — it is remembered on this browser.';
+  $('#open2').style.display = groups.length ? 'none' : '';
+}
+
+function load(data, remember) {
+  groups = parse(data); render();
+  if (remember) LS.set('cache', data);
+}
+
+async function loadFile(file) {
+  try { load(JSON.parse(await file.text()), true); toast(`Loaded ${file.name}`); }
+  catch (e) { toast('Invalid JSON: ' + e.message); }
+}
+
+async function init() {
+  try {
+    const r = await fetch('snippets.json', { cache:'no-store' });
+    if (!r.ok) throw 0;
+    load(await r.json(), true);
+  } catch {
+    const cached = LS.get('cache', null);
+    if (cached) { load(cached, false); toast('Using last saved copy of snippets.json'); }
+    else render();
+  }
+}
+
+$('#q').addEventListener('input', render);
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') document.querySelector('.tile')?.click(); if (e.key === 'Escape') { e.target.value=''; render(); } });
+document.addEventListener('keydown', e => { if (e.key === '/' && document.activeElement !== $('#q')) { e.preventDefault(); $('#q').focus(); } });
+for (const id of ['#open','#open2']) $(id).onclick = () => $('#file').click();
+$('#file').onchange = e => e.target.files[0] && loadFile(e.target.files[0]);
+$('#theme').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; LS.set('theme', next);
+};
+const th = LS.get('theme', null); if (th) document.documentElement.dataset.theme = th;
+let dragN = 0;
+addEventListener('dragenter', e => { e.preventDefault(); dragN++; $('#drop').style.display = 'flex'; });
+addEventListener('dragleave', () => { if (--dragN <= 0) $('#drop').style.display = 'none'; });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); dragN = 0; $('#drop').style.display = 'none'; const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
+init();
+</script>
+</body>
+</html>
