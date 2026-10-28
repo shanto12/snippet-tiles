@@ -10,15 +10,15 @@
 <style>
   :root {
     --bg:#f5f4ff; --m1:rgba(139,92,246,.20); --m2:rgba(236,72,153,.16); --m3:rgba(14,165,233,.18);
-    --text:#17162b; --muted:#6b6a85; --panel:rgba(255,255,255,.78); --border:rgba(23,22,43,.10); --head:rgba(245,244,255,.86);
+    --text:#17162b; --muted:#6b6a85; --panel:rgba(255,255,255,.78); --solid:#ffffff; --field:#f4f3fb; --border:rgba(23,22,43,.10); --head:rgba(245,244,255,.86);
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme=light]) {
     --bg:#0c0d18; --m1:rgba(139,92,246,.28); --m2:rgba(236,72,153,.18); --m3:rgba(14,165,233,.20);
-    --text:#eeeefe; --muted:#9a99b8; --panel:rgba(30,31,52,.78); --border:rgba(255,255,255,.10); --head:rgba(12,13,24,.86);
+    --text:#eeeefe; --muted:#9a99b8; --panel:rgba(30,31,52,.78); --solid:#1a1b2e; --field:#24253b; --border:rgba(255,255,255,.10); --head:rgba(12,13,24,.86);
   } }
   :root[data-theme=dark] {
     --bg:#0c0d18; --m1:rgba(139,92,246,.28); --m2:rgba(236,72,153,.18); --m3:rgba(14,165,233,.20);
-    --text:#eeeefe; --muted:#9a99b8; --panel:rgba(30,31,52,.78); --border:rgba(255,255,255,.10); --head:rgba(12,13,24,.86);
+    --text:#eeeefe; --muted:#9a99b8; --panel:rgba(30,31,52,.78); --solid:#1a1b2e; --field:#24253b; --border:rgba(255,255,255,.10); --head:rgba(12,13,24,.86);
   }
   * { box-sizing:border-box }
   html { background:var(--bg) }
@@ -32,10 +32,11 @@
 
   header { position:sticky; top:0; z-index:5; background:var(--head); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid var(--border); }
   .bar { max-width:1240px; margin:0 auto; padding:14px 16px 10px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .brand { display:flex; align-items:center; gap:10px; margin-right:6px; }
-  .logo { width:36px; height:36px; border-radius:11px; display:grid; place-items:center; font-size:18px; background:linear-gradient(135deg,#8b5cf6,#ec4899 55%,#f59e0b); box-shadow:0 6px 16px -6px #ec4899; }
+  .brand { display:flex; align-items:center; gap:10px; margin-right:6px; min-width:0 }
+  .logo { flex:none; width:36px; height:36px; border-radius:11px; display:grid; place-items:center; font-size:18px; background:linear-gradient(135deg,#8b5cf6,#ec4899 55%,#f59e0b); box-shadow:0 6px 16px -6px #ec4899; }
   .brand h1 { font-size:18px; font-weight:800; margin:0; letter-spacing:-.01em; white-space:nowrap }
-  .brand small { display:block; color:var(--muted); font-size:12px; font-weight:600 }
+  .brand small { display:block; color:var(--muted); font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px }
+  .brand small b { color:#f59e0b }
   .search { flex:1; min-width:180px; position:relative }
   .search input { width:100%; padding:10px 14px 10px 36px; border-radius:12px; border:1px solid var(--border); background:var(--panel); color:var(--text); font:inherit; }
   .search input:focus { outline:2px solid #8b5cf6; outline-offset:1px }
@@ -43,14 +44,20 @@
   .seg { display:flex; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:3px; }
   .seg button { border:0; background:none; padding:6px 11px; border-radius:9px; color:var(--muted); cursor:pointer; font:inherit; font-size:13px; font-weight:600 }
   .seg button.on { background:var(--text); color:var(--bg) }
-  .btn { background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; cursor:pointer; font:inherit; font-size:13px; font-weight:600 }
+  .btn { background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:8px 12px; cursor:pointer; font:inherit; font-size:13px; font-weight:600; white-space:nowrap }
   .btn:hover { border-color:#8b5cf6 }
+  .btn.primary { background:linear-gradient(135deg,#8b5cf6,#ec4899); color:#fff; border-color:transparent; box-shadow:0 6px 16px -8px #ec4899 }
+  .btn.danger { background:linear-gradient(135deg,#f43f5e,#b91c1c); color:#fff; border-color:transparent }
   .chips { max-width:1240px; margin:0 auto; padding:0 16px 12px; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none }
   .chips:empty { display:none }
   .chip { display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:99px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; white-space:nowrap; font:inherit; font-size:13px; font-weight:600 }
   .chip .dot { width:9px; height:9px; border-radius:50%; background:var(--g) }
   .chip.on { background:var(--g); color:#fff; border-color:transparent; box-shadow:0 6px 14px -8px var(--s) }
   .chip.on .dot { background:#fff }
+  #notice { max-width:1240px; margin:0 auto; padding:0 16px 12px; display:none; }
+  #notice.show { display:block }
+  #notice div { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:9px 12px; border-radius:12px; background:rgba(245,158,11,.14); border:1px solid rgba(245,158,11,.35); font-size:13.5px; font-weight:600 }
+  #notice span { flex:1; min-width:200px }
 
   main { max-width:1240px; margin:0 auto; padding:6px 16px 80px }
   h2 { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:800; letter-spacing:.02em; margin:26px 0 12px }
@@ -69,29 +76,67 @@
   .tile:focus-visible { outline:3px solid var(--text); outline-offset:2px }
   .tile:active { transform:scale(.97) }
   .ico { font-size:20px; line-height:1 }
-  .k { font-weight:800; font-size:15.5px; line-height:1.25; padding-right:22px; text-shadow:0 1px 2px rgba(0,0,0,.12) }
+  .k { font-weight:800; font-size:15.5px; line-height:1.25; padding-right:44px; text-shadow:0 1px 2px rgba(0,0,0,.12) }
   .v { font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-  .v.hid { letter-spacing:.2em }
+  .v.hid { letter-spacing:.12em }
   .tags { margin-top:auto; padding-top:4px; display:flex; gap:5px; flex-wrap:wrap }
   .tags i { font-style:normal; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; background:rgba(255,255,255,.24) }
-  .pin { position:absolute; top:9px; right:10px; font-size:16px; opacity:0; transition:opacity .15s; color:#fff }
-  .tile:hover .pin, .tile:focus-visible .pin, .pin.on { opacity:.95 }
+  .act { position:absolute; top:7px; font-size:15px; width:26px; height:26px; display:grid; place-items:center; border-radius:8px; opacity:0; transition:opacity .15s, background .15s; color:#fff }
+  .act:hover { background:rgba(255,255,255,.22) }
+  .pin { right:7px } .edit { right:34px }
+  .tile:hover .act, .tile:focus-visible .act, .pin.on { opacity:.95 }
+  @media (hover:none) { .act { opacity:.7 } }
   .done { position:absolute; inset:0; display:grid; place-items:center; font-weight:800; font-size:16px; background:rgba(10,10,20,.45); opacity:0; transition:opacity .15s; pointer-events:none }
   .tile.copied .done { opacity:1 }
+  .add { min-height:112px; border:2px dashed var(--border); border-radius:18px; background:transparent; color:var(--muted); font:inherit; font-weight:700; cursor:pointer }
+  .add:hover { border-color:#8b5cf6; color:var(--text) }
 
-  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:10px 18px; border-radius:99px; font-weight:600; opacity:0; pointer-events:none; transition:.2s; max-width:90vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-shadow:0 10px 30px -10px rgba(0,0,0,.5) }
+  dialog { border:0; padding:0; border-radius:20px; width:min(560px, calc(100vw - 24px)); max-height:calc(100vh - 24px); background:var(--solid); color:var(--text); box-shadow:0 30px 80px -20px rgba(0,0,0,.55) }
+  dialog::backdrop { background:rgba(8,8,20,.55) }
+  dialog form { display:grid; gap:14px; padding:22px }
+  dialog h3 { margin:0; font-size:18px; font-weight:800 }
+  .row { display:grid; gap:6px }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+  .row > span { font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.02em }
+  .row small { color:var(--muted); font-size:11.5px }
+  .f { width:100%; padding:10px 12px; border-radius:11px; border:1px solid var(--border); background:var(--field); color:var(--text); font:inherit }
+  textarea.f { font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; resize:vertical; min-height:90px }
+  .f:focus { outline:2px solid #8b5cf6; outline-offset:0 }
+  .pw { position:relative } .pw .f { padding-right:44px; font-family:ui-monospace,Menlo,monospace }
+  .pw button { position:absolute; right:6px; top:50%; transform:translateY(-50%); border:0; background:none; cursor:pointer; font-size:16px; color:var(--muted) }
+  .sw { display:flex; flex-wrap:wrap; gap:7px }
+  .sw label { cursor:pointer }
+  .sw input { position:absolute; opacity:0; pointer-events:none }
+  .sw span { display:grid; place-items:center; width:28px; height:28px; border-radius:9px; background:var(--g); font-size:11px; font-weight:700; color:var(--muted) }
+  .sw .auto span { width:auto; padding:0 9px; background:var(--field); border:1px solid var(--border) }
+  .sw input:checked + span { outline:3px solid var(--text); outline-offset:2px }
+  .sw input:focus-visible + span { outline:3px solid #8b5cf6; outline-offset:2px }
+  .sugg { display:flex; flex-wrap:wrap; gap:6px }
+  .sugg button { border:1px solid var(--border); background:var(--field); color:var(--text); border-radius:99px; padding:3px 10px; font:inherit; font-size:12px; font-weight:600; cursor:pointer }
+  .sugg button.on { background:var(--text); color:var(--solid) }
+  .check { display:flex; align-items:center; gap:10px; font-weight:700; cursor:pointer }
+  .check input { width:18px; height:18px; accent-color:#8b5cf6 }
+  .foot { display:flex; gap:10px; align-items:center; margin-top:4px }
+  .foot .sp { flex:1 }
+  .err { color:#f43f5e; font-size:13px; font-weight:700; min-height:0 }
+  .err:empty { display:none }
+  #confirm form { max-width:420px }
+  #confirm p { margin:0; color:var(--muted) }
+
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:10px 18px; border-radius:99px; font-weight:600; opacity:0; pointer-events:none; transition:.2s; max-width:90vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-shadow:0 10px 30px -10px rgba(0,0,0,.5); z-index:20 }
   #toast.show { opacity:1; transform:translateX(-50%) }
-  #empty { text-align:center; color:var(--muted); padding:70px 16px; display:none }
-  #empty button { margin-top:14px; background:linear-gradient(135deg,#8b5cf6,#ec4899); color:#fff; border:0; border-radius:12px; padding:11px 18px; cursor:pointer; font:inherit; font-weight:700 }
+  #empty { text-align:center; color:var(--muted); padding:60px 16px; display:none }
+  #empty p { max-width:520px; margin:0 auto 14px }
+  #empty .btn { margin:4px }
   #drop { position:fixed; inset:0; background:rgba(139,92,246,.18); border:3px dashed #8b5cf6; display:none; align-items:center; justify-content:center; font-size:22px; font-weight:800; z-index:10 }
   .help { color:var(--muted); font-size:12px; text-align:center; margin-top:40px }
   kbd { font:11px ui-monospace,Menlo,monospace; padding:1px 5px; border:1px solid var(--border); border-radius:5px; background:var(--panel) }
 
   @media (max-width:640px) {
-    .brand small { display:none }
     .search { order:5; flex-basis:100% }
     .grid { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px }
-    .tile { min-height:100px; padding:13px }
+    .tile, .add { min-height:100px } .tile { padding:13px }
+    .two { grid-template-columns:1fr }
     .help { display:none }
   }
   @media (prefers-reduced-motion: reduce) { * { transition:none !important } }
@@ -105,19 +150,63 @@
     <div class="seg" id="groupBy" title="Group tiles by">
       <button type="button" data-g="section">Sections</button><button type="button" data-g="tag">Tags</button><button type="button" data-g="none">All</button>
     </div>
-    <button type="button" class="btn" id="open" title="Load a snippets.json from disk">Load JSON</button>
+    <button type="button" class="btn primary" id="new" title="Add a new tile (N)">＋ New</button>
+    <button type="button" class="btn" id="reload" title="Reload snippets.json from disk">⟳ Reload JSON</button>
+    <button type="button" class="btn" id="open" title="Open a different JSON file">Load JSON</button>
     <button type="button" class="btn" id="theme" title="Toggle light / dark">◐</button>
   </div>
   <div class="chips" id="chips"></div>
+  <div id="notice"><div><span id="noticeMsg"></span><span id="noticeBtns" style="flex:none;display:flex;gap:8px;min-width:0"></span></div></div>
 </header>
 <main>
   <div id="app"></div>
   <div id="empty">
     <p id="emptyMsg">No snippets found.</p>
-    <button type="button" id="open2">Choose snippets.json</button>
+    <button type="button" class="btn primary" id="open2">Choose snippets.json</button>
+    <button type="button" class="btn" id="new2">＋ Start a new list</button>
   </div>
-  <p class="help"><kbd>/</kbd> search · <kbd>↑↓←→</kbd> move · <kbd>Enter</kbd> copy · <kbd>P</kbd> pin · <kbd>Esc</kbd> clear</p>
+  <p class="help"><kbd>/</kbd> search · <kbd>↑↓←→</kbd> move · <kbd>Enter</kbd> copy · <kbd>E</kbd> edit · <kbd>P</kbd> pin · <kbd>Del</kbd> delete · <kbd>N</kbd> new</p>
 </main>
+
+<dialog id="editor">
+  <form method="dialog" id="edForm" autocomplete="off">
+    <h3 id="edTitle">New tile</h3>
+    <label class="row"><span>NAME (tile text)</span><input class="f" id="edName" required maxlength="120"></label>
+    <div class="row">
+      <span>VALUE (copied on click)</span>
+      <textarea class="f" id="edValue" rows="4" spellcheck="false"></textarea>
+      <div class="pw" id="edPwWrap" hidden><input class="f" id="edPw" type="password" spellcheck="false"><button type="button" id="edPeek" title="Show / hide">👁</button></div>
+      <small>Placeholders: {date} {time} {datetime} {iso}</small>
+    </div>
+    <label class="check"><input type="checkbox" id="edSecret"> Password / secret — show as ******** on screen</label>
+    <div class="two">
+      <label class="row"><span>SECTION</span><input class="f" id="edSection" list="sectionList" placeholder="General"><datalist id="sectionList"></datalist></label>
+      <label class="row"><span>ICON (emoji, optional)</span><input class="f" id="edIcon" maxlength="8" placeholder="e.g. 🚀"></label>
+    </div>
+    <div class="row">
+      <span>TAGS (comma separated)</span>
+      <input class="f" id="edTags" placeholder="dev, prod">
+      <div class="sugg" id="edTagSugg"></div>
+    </div>
+    <div class="row"><span>COLOUR</span><div class="sw" id="edColors"></div></div>
+    <div class="err" id="edErr"></div>
+    <div class="foot">
+      <button type="button" class="btn danger" id="edDelete">Delete</button>
+      <span class="sp"></span>
+      <button type="button" class="btn" id="edCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="edSave">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirm">
+  <form method="dialog">
+    <h3 id="cfTitle">Are you sure?</h3>
+    <p id="cfMsg"></p>
+    <div class="foot"><span class="sp"></span><button type="button" class="btn" id="cfNo">Cancel</button><button type="button" class="btn danger" id="cfOk">Delete</button></div>
+  </form>
+</dialog>
+
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="drop">Drop snippets.json here</div>
 <input id="file" type="file" accept=".json,application/json" hidden>
@@ -131,7 +220,7 @@
                  "color": "red",                      palette name or any CSS colour
                  "icon": "🚨",                         emoji shown on the tile
                  "tags": ["prod"],                    tags for filtering / grouping
-                 "hidden": true }                     hide the value on screen (also: start the name with 🔒)
+                 "password": true }                   show as ******** on screen (also: "hidden": true, or a name starting with 🔒)
   "Section name": { "_color": "..", "_icon": "..",  a section of tiles; _tags apply to every tile inside
                     "_tags": [..], "Tile": ... }
   "_config": { "title": "...",                     page title
@@ -140,6 +229,11 @@
                "tags": { "prod": { "label": "Production", "color": "red", "icon": "🚨" } } }
   Placeholders in values: {date} {time} {datetime} {iso}
   Palette: violet pink orange amber green lime teal sky blue red indigo slate
+
+  Files: on http(s) the page loads ./snippets.json by itself. Opened from disk (file://), browsers only
+  let a page read a file you picked, so pick snippets.json once with "Load JSON"; Chrome/Edge remember
+  that file, reload it on every visit and save edits straight back into it. Other browsers keep a copy
+  and save edits by downloading a new snippets.json.
 
   Privacy: the page only ever WRITES to the clipboard on your click; it never reads it, never
   contacts another host (enforced by the Content-Security-Policy above), and runs no remote code.
@@ -151,17 +245,24 @@ const PALETTE = {
   blue:['#3b82f6','#4338ca'], red:['#f43f5e','#b91c1c'], indigo:['#6366f1','#7e22ce'], slate:['#64748b','#1e293b'],
 };
 const CYCLE = ['violet','sky','pink','teal','orange','indigo','green','red','blue','amber','lime'];
+const MASK = '********';
 const $ = s => document.querySelector(s);
 const LS = { get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } },
              set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} } };
 
-let cfg = {}, sections = [], items = [], byId = new Map(), tagCache = new Map(), lastRaw = '';
+let doc = {}, cfg = {}, sections = [], items = [], byId = new Map(), tagCache = new Map(), lastRaw = '';
 let pins = new Set(LS.get('pins', []));
 let recent = LS.get('recent', []);
 let activeTags = new Set(LS.get('tags', []));
 let groupBy = null, toastTimer, frame = 0;
+let handle = null;                 // FileSystemFileHandle of the connected snippets.json (Chrome/Edge)
+let dirty = LS.get('dirty', false);  // edits not yet written to a file
+let needsConnect = false;          // showing the saved copy; the file needs one click to re-open
+const FS = typeof window.showOpenFilePicker === 'function';
+const served = /^https?:$/.test(location.protocol);
 
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+const isSection = v => isObj(v) && !('value' in v);
 const hashColor = s => CYCLE[[...String(s)].reduce((a,c) => a + c.charCodeAt(0), 0) % CYCLE.length];
 function paint(el, c) {
   const p = PALETTE[c];
@@ -178,27 +279,45 @@ function tagInfo(t) {
   return tagCache.get(t);
 }
 
+// ---------- tiny IndexedDB store for the file handle ----------
+function idb(mode, fn) {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('snippet-tiles', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => {
+      const tx = r.result.transaction('kv', mode), req = fn(tx.objectStore('kv'));
+      tx.oncomplete = () => res(req.result); tx.onerror = () => rej(tx.error);
+    };
+  });
+}
+const idbGet = k => idb('readonly', s => s.get(k)).catch(() => null);
+const idbSet = (k, v) => idb('readwrite', s => s.put(v, k)).catch(() => {});
+
+// ---------- parsing ----------
 function parse(data) {
   if (!isObj(data)) throw new Error('top level must be an object');
+  doc = data;
   cfg = isObj(data._config) ? data._config : {};
   sections = []; items = []; byId = new Map(); tagCache = new Map();
   let n = 0;
   const add = (key, raw, sec) => {
     const o = isObj(raw) ? raw : { value:raw };
-    const tags = [...new Set([...(sec?.tags || []), ...[].concat(o.tags || [])].map(String))];
+    const ownTags = [].concat(o.tags || []).map(String);
+    const tags = [...new Set([...(sec?.tags || []).map(String), ...ownTags])];
     const it = {
-      id:(sec?.name || '') + '\u0000' + key, key, section:sec?.name || '',
+      id:(sec?.name || '') + '\u0000' + key, key, section:sec?.name || '', raw, ownTags,
       value:Array.isArray(o.value) ? o.value.join('\n') : String(o.value ?? ''),
-      color:o.color || sec?.color || CYCLE[n++ % CYCLE.length],
-      icon:o.icon || '', tags, hidden:!!o.hidden || key.startsWith('🔒'),
+      color:o.color || sec?.color || CYCLE[n++ % CYCLE.length], ownColor:o.color || '',
+      icon:o.icon || '', tags, hidden:!!(o.password || o.hidden) || key.startsWith('🔒'),
     };
-    // pre-computed lowercase text so each keystroke is a cheap string test
+    // pre-computed lowercase text so each keystroke is a cheap string test (secrets are never searchable)
     it.hay = [key, it.section, ...tags.map(t => tagInfo(t).label), it.hidden ? '' : it.value].join('\n').toLowerCase();
     items.push(it); byId.set(it.id, it);
   };
   for (const [k,v] of Object.entries(data)) {
     if (k.startsWith('_')) continue;
-    if (isObj(v) && !('value' in v)) {
+    if (isSection(v)) {
       const sec = { name:k, color:v._color, icon:v._icon || '', tags:[].concat(v._tags || []) };
       sections.push(sec);
       for (const [k2,v2] of Object.entries(v)) if (!k2.startsWith('_')) add(k2, v2, sec);
@@ -223,6 +342,7 @@ function expand(text) {
     t==='date' ? date : t==='time' ? time : t==='datetime' ? `${date} ${time}` : d.toISOString());
 }
 
+// ---------- clipboard ----------
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch {}
   const ta = document.createElement('textarea');
@@ -235,7 +355,7 @@ async function copy(text) {
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
 async function copyTile(btn) {
@@ -254,6 +374,7 @@ function togglePin(id) {
   LS.set('pins', [...pins]); render(id);
 }
 
+// ---------- rendering ----------
 function renderChips() {
   const box = $('#chips'), frag = document.createDocumentFragment();
   const tags = allTags();
@@ -283,13 +404,14 @@ function tile(item) {
   const el = (cls, text) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; btn.appendChild(s); return s; };
   if (item.icon) el('ico', item.icon);
   el('k', item.key);
-  el(item.hidden ? 'v hid' : 'v', item.hidden ? '••••••••' : item.value.slice(0, 160).replace(/\s+/g,' '));
+  el(item.hidden ? 'v hid' : 'v', item.hidden ? MASK : item.value.slice(0, 160).replace(/\s+/g,' '));
   if (item.tags.length) {
     const tg = el('tags', '');
     for (const t of item.tags) { const i = document.createElement('i'); i.textContent = tagInfo(t).label; tg.appendChild(i); }
   }
   const pinned = pins.has(item.id);
-  el('pin' + (pinned ? ' on' : ''), pinned ? '★' : '☆').title = 'Pin to top (P)';
+  el('act edit', '✎').title = 'Edit (E)';
+  el('act pin' + (pinned ? ' on' : ''), pinned ? '★' : '☆').title = 'Pin to top (P)';
   el('done', '✓ Copied');
   return btn;
 }
@@ -311,7 +433,7 @@ function render(focusId) {
 
   if (groupBy === 'section') {
     groups.push({ name:sections.length ? (cfg.ungroupedLabel || 'General') : '', icon:'', color:'slate', items:rest.filter(i => !i.section) });
-    for (const s of sections) groups.push({ name:s.name, icon:s.icon, color:s.color || hashColor(s.name), items:rest.filter(i => i.section === s.name) });
+    for (const s of sections) groups.push({ name:s.name, icon:s.icon, color:s.color || hashColor(s.name), items:rest.filter(i => i.section === s.name), section:s.name });
   } else if (groupBy === 'tag') {
     for (const t of allTags()) {
       if (activeTags.size && !activeTags.has(t)) continue;
@@ -335,50 +457,321 @@ function render(focusId) {
     }
     const grid = document.createElement('div'); grid.className = 'grid';
     for (const item of g.items) grid.appendChild(tile(item));
+    if (!words.length && !activeTags.size && groupBy === 'section' && g.section !== undefined) {
+      const add = document.createElement('button'); add.type = 'button'; add.className = 'add';
+      add.textContent = '＋ Add tile'; add.dataset.section = g.section; grid.appendChild(add);
+    }
     frag.appendChild(grid);
   }
   $('#app').replaceChildren(frag);
   if (focusId) [...document.querySelectorAll('.tile')].find(t => t.dataset.id === focusId)?.focus({ preventScroll:true });
-  $('#count').textContent = items.length ? `${items.length} snippets · click to copy` : '';
   $('#empty').style.display = shown.length ? 'none' : 'block';
-  $('#emptyMsg').textContent = items.length ? 'No matches.' : 'Could not auto-load snippets.json (browsers block this on file:// pages). Choose or drop the file once — it is remembered on this browser.';
-  $('#open2').style.display = items.length ? 'none' : '';
+  $('#emptyMsg').textContent = items.length ? 'No matches.' :
+    FS ? 'Pick your snippets.json once (it sits next to this page). From then on it loads by itself and edits save straight back into it.'
+       : 'Choose your snippets.json (it sits next to this page), or drop it here. A copy is remembered on this browser.';
+  $('#open2').style.display = $('#new2').style.display = items.length ? 'none' : '';
+  status();
 }
+
+function status() {
+  const src = handle ? `📄 ${handle.name}` : served ? '🌐 snippets.json' : items.length ? 'saved copy' : '';
+  const c = $('#count');
+  c.textContent = items.length ? `${items.length} snippets${src ? ' · ' + src : ''}` : '';
+  if (dirty) { const b = document.createElement('b'); b.textContent = ' · unsaved'; c.appendChild(b); }
+
+  const btns = [];
+  let msg = '';
+  if (dirty) {
+    msg = handle ? `Changes are not saved to ${handle.name} yet.` : FS ? 'Changes are only in this browser. Save them into your snippets.json.' : 'Changes are only in this browser. Download the updated snippets.json and replace the old file.';
+    btns.push(['Save to file', 'primary', saveToFile]);
+  } else if (needsConnect && handle) {
+    msg = `Showing the last saved copy. Click to re-open ${handle.name} (the browser asks once).`;
+    btns.push([`Open ${handle.name}`, 'primary', () => reloadJSON()]);
+  }
+  $('#notice').classList.toggle('show', !!msg);
+  $('#noticeMsg').textContent = msg;
+  $('#noticeBtns').replaceChildren(...btns.map(([label, cls, fn]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + cls; b.textContent = label; b.onclick = fn; return b;
+  }));
+}
+
+// ---------- loading & saving ----------
+function setDirty(v) { dirty = v; LS.set('dirty', v); }
 
 function load(raw, remember) {
-  const data = JSON.parse(raw);
-  parse(data); render();
+  parse(JSON.parse(raw));
   lastRaw = raw;
   if (remember) { try { localStorage.setItem('cache', raw); } catch {} }
+  render();
 }
 
-async function loadFile(file) {
-  try { load(await file.text(), true); toast(`Loaded ${file.name}`); }
-  catch (e) { toast('Invalid JSON: ' + e.message); }
+async function permitted(h, ask) {
+  const opts = { mode:'readwrite' };
+  try {
+    if (await h.queryPermission(opts) === 'granted') return true;
+    return ask && await h.requestPermission(opts) === 'granted';
+  } catch { return false; }
 }
 
-const served = /^https?:$/.test(location.protocol);
-async function fetchSnippets(quiet) {
-  if (!served) throw new Error('file');
+async function readHandle(ask) {
+  if (!await permitted(handle, ask)) { needsConnect = true; status(); return false; }
+  const raw = await (await handle.getFile()).text();
+  needsConnect = false;
+  if (raw !== lastRaw || dirty) { setDirty(false); load(raw, true); } else status();
+  return true;
+}
+
+async function fetchSnippets() {
   const r = await fetch('snippets.json', { cache:'no-store', credentials:'omit' });
   if (!r.ok) throw new Error(r.status);
   const raw = await r.text();
-  if (raw !== lastRaw) { load(raw, true); if (quiet) toast('snippets.json updated'); }
+  if (raw !== lastRaw || dirty) { setDirty(false); load(raw, true); }
+}
+
+async function useHandle(h) {
+  handle = h; await idbSet('handle', h);
+  await readHandle(true);
+}
+
+async function openFile() {
+  if (dirty && !await ask('Discard unsaved changes?', 'Your edits have not been saved to a file yet.', 'Discard')) return;
+  if (!FS) { $('#file').click(); return; }
+  try {
+    const [h] = await showOpenFilePicker({ types:[{ description:'JSON', accept:{ 'application/json':['.json'] } }] });
+    await useHandle(h);
+    toast(`Loaded ${h.name}`);
+  } catch (e) { if (e.name !== 'AbortError') toast('Could not open: ' + e.message); }
+}
+
+async function loadFile(file) {   // <input type=file> / drag & drop (no write access)
+  try { setDirty(false); load(await file.text(), true); toast(`Loaded ${file.name}`); }
+  catch (e) { toast('Invalid JSON: ' + e.message); }
+}
+
+async function reloadJSON() {
+  if (dirty && !await ask('Discard unsaved changes?', 'Reloading replaces them with what is in the file.', 'Reload')) return;
+  try {
+    if (handle) { if (await readHandle(true)) toast(`Reloaded ${handle.name}`); else toast('Permission needed to read the file'); }
+    else if (served) { setDirty(false); await fetchSnippets(); toast('Reloaded snippets.json'); }
+    else await openFile();
+  } catch (e) { toast('Reload failed: ' + e.message); }
+}
+
+const serialize = () => JSON.stringify(doc, null, 2) + '\n';
+
+async function writeHandle(text) {
+  if (!handle || !await permitted(handle, true)) return false;
+  const w = await handle.createWritable();
+  await w.write(text); await w.close();
+  return true;
+}
+
+async function saveToFile() {
+  const text = serialize();
+  try {
+    if (handle && await writeHandle(text)) { lastRaw = text; setDirty(false); needsConnect = false; status(); toast(`Saved to ${handle.name}`); return; }
+    if (FS) {
+      const h = await showSaveFilePicker({ suggestedName:'snippets.json', types:[{ description:'JSON', accept:{ 'application/json':['.json'] } }] });
+      handle = h; await idbSet('handle', h);
+      if (await writeHandle(text)) { lastRaw = text; setDirty(false); needsConnect = false; status(); toast(`Saved to ${h.name}`); }
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type:'application/json' }));
+    a.download = 'snippets.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    setDirty(false); status();
+    toast('Downloaded snippets.json — replace the old file with it');
+  } catch (e) { if (e.name !== 'AbortError') toast('Save failed: ' + e.message); }
+}
+
+// every edit goes through here: update the document, re-render, persist
+async function commit(msg) {
+  const text = serialize();
+  lastRaw = text;
+  try { localStorage.setItem('cache', text); } catch {}
+  parse(doc);
+  setDirty(true);
+  render();
+  try {
+    if (handle && await writeHandle(text)) { setDirty(false); needsConnect = false; status(); toast(`${msg} · saved to ${handle.name}`); return; }
+  } catch {}
+  toast(`${msg} · not saved to a file yet`);
 }
 
 async function init() {
-  try { await fetchSnippets(false); }
-  catch {
-    let cached = null; try { cached = localStorage.getItem('cache'); } catch {}
-    if (cached) { try { load(cached, false); if (served) toast('Offline — using last saved snippets'); } catch { render(); } }
-    else render();
+  handle = FS ? await idbGet('handle') : null;
+  const cached = (() => { try { return localStorage.getItem('cache'); } catch { return null; } })();
+  try {
+    if (dirty && cached) { load(cached, false); return; }              // keep unsaved edits
+    if (handle && await readHandle(false)) return;                     // the connected file (permission remembered)
+    if (served) { await fetchSnippets(); return; }                     // ./snippets.json next to the page
+    throw new Error('no source');
+  } catch {
+    if (cached) { try { load(cached, false); needsConnect = !!handle; status(); return; } catch {} }
+    render();
   }
 }
 
-// ---- events (delegated: one listener for every tile) ----
+// ---------- editor ----------
+let editing = null;   // item being edited, or null for a new tile
+
+function container(name, create) {
+  if (!name) return doc;
+  if (isSection(doc[name])) return doc[name];
+  if (!create) return null;
+  if (name in doc) throw new Error(`“${name}” is already a tile name at the top level`);
+  doc[name] = {};
+  return doc[name];
+}
+
+function setSecretMode(on) {
+  const ta = $('#edValue'), pw = $('#edPw');
+  if (on) { pw.value = ta.value.replace(/\n/g, ' '); } else { ta.value = pw.value || ta.value; }
+  ta.hidden = on; $('#edPwWrap').hidden = !on; pw.type = 'password';
+}
+
+function openEditor(item, section) {
+  editing = item || null;
+  $('#edTitle').textContent = item ? 'Edit tile' : 'New tile';
+  $('#edErr').textContent = '';
+  $('#edName').value = item ? item.key : '';
+  $('#edValue').value = item ? item.value : ''; $('#edPw').value = '';
+  $('#edSecret').checked = !!item?.hidden;
+  setSecretMode(!!item?.hidden);
+  if (item?.hidden) $('#edPw').value = item.value;
+  $('#edSection').value = item ? item.section : (section ?? LS.get('lastSection', ''));
+  $('#edIcon').value = item?.icon || '';
+  $('#edTags').value = (item ? item.ownTags : []).join(', ');
+  $('#sectionList').replaceChildren(...sections.map(s => Object.assign(document.createElement('option'), { value:s.name })));
+  const colors = $('#edColors'); colors.replaceChildren();
+  const cur = item?.ownColor || '';
+  const sw = (val, label, cls) => {
+    const l = document.createElement('label'); if (cls) l.className = cls;
+    const i = Object.assign(document.createElement('input'), { type:'radio', name:'edColor', value:val, checked:cur === val });
+    const s = document.createElement('span'); s.textContent = label; s.title = val || 'Automatic';
+    if (val) paint(s, val);
+    l.append(i, s); colors.appendChild(l);
+  };
+  sw('', 'Auto', 'auto');
+  for (const c of Object.keys(PALETTE)) sw(c, '');
+  if (cur && !PALETTE[cur]) sw(cur, '');
+  renderTagSugg();
+  $('#edDelete').hidden = !item;
+  $('#editor').showModal();
+  $('#edName').focus();
+}
+
+function readTags() { return [...new Set($('#edTags').value.split(',').map(s => s.trim()).filter(Boolean))]; }
+function renderTagSugg() {
+  const cur = new Set(readTags());
+  const all = [...new Set([...Object.keys(cfg.tags || {}), ...allTags()])];
+  $('#edTagSugg').replaceChildren(...all.map(t => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = tagInfo(t).label;
+    b.className = cur.has(t) ? 'on' : '';
+    b.onclick = () => { const s = new Set(readTags()); s.has(t) ? s.delete(t) : s.add(t); $('#edTags').value = [...s].join(', '); renderTagSugg(); };
+    return b;
+  }));
+}
+
+function renameId(oldId, newId) {
+  if (oldId === newId) return;
+  if (pins.delete(oldId)) { pins.add(newId); LS.set('pins', [...pins]); }
+  recent = recent.map(id => id === oldId ? newId : id); LS.set('recent', recent);
+}
+function forgetId(id) {
+  if (pins.delete(id)) LS.set('pins', [...pins]);
+  recent = recent.filter(x => x !== id); LS.set('recent', recent);
+}
+
+async function saveEditor(e) {
+  e.preventDefault();
+  const err = m => { $('#edErr').textContent = m; };
+  const name = $('#edName').value.trim();
+  const secret = $('#edSecret').checked;
+  const value = secret ? $('#edPw').value : $('#edValue').value;
+  const section = $('#edSection').value.trim();
+  if (!name) return err('Give the tile a name.');
+  if (name.startsWith('_')) return err('Names cannot start with “_” (reserved for settings).');
+  if (!value) return err('The value is empty.');
+  let target;
+  try { target = container(section, true); } catch (x) { return err(x.message); }
+  const oldCont = editing ? container(editing.section, false) : null;
+  if (Object.prototype.hasOwnProperty.call(target, name) && !(editing && target === oldCont && name === editing.key))
+    return err(`There is already a tile called “${name}” in ${section || 'General'}.`);
+  if (!section && isSection(doc[name])) return err(`“${name}” is already a section name.`);
+
+  // keep any extra fields the tile already had; rewrite the ones the form manages
+  const extras = {};
+  if (editing && isObj(editing.raw)) for (const [k,v] of Object.entries(editing.raw)) if (!['value','color','icon','tags','password','hidden'].includes(k)) extras[k] = v;
+  const tags = readTags();
+  const color = document.querySelector('input[name=edColor]:checked')?.value || '';
+  const icon = $('#edIcon').value.trim();
+  const opts = { ...extras };
+  if (color) opts.color = color;
+  if (icon) opts.icon = icon;
+  if (tags.length) opts.tags = tags;
+  if (secret) opts.password = true;
+  const v = value.includes('\n') ? value.split('\n') : value;
+  const raw = Object.keys(opts).length ? { value:v, ...opts } : v;
+
+  if (editing && target === oldCont) {
+    // same place: rename in place so the tile keeps its position in the file
+    const entries = Object.entries(target).map(([k,val]) => k === editing.key ? [name, raw] : [k, val]);
+    for (const k of Object.keys(target)) delete target[k];
+    for (const [k,val] of entries) target[k] = val;
+  } else {
+    if (editing) delete oldCont[editing.key];
+    target[name] = raw;
+  }
+  if (editing) renameId(editing.id, section + '\u0000' + name);
+  LS.set('lastSection', section);
+  $('#editor').close();
+  await commit(editing ? `Updated “${name}”` : `Added “${name}”`);
+}
+
+async function deleteItem(item) {
+  if (!item) return;
+  if (!await ask(`Delete “${item.key}”?`, 'The tile is removed from your snippets.json.', 'Delete')) return;
+  const cont = container(item.section, false);
+  if (cont) delete cont[item.key];
+  forgetId(item.id);
+  if ($('#editor').open) $('#editor').close();
+  await commit(`Deleted “${item.key}”`);
+}
+
+let answer = null;   // resolver of the open confirm dialog
+function ask(title, msg, okLabel) {
+  const d = $('#confirm');
+  answer?.(false);
+  $('#cfTitle').textContent = title; $('#cfMsg').textContent = msg; $('#cfOk').textContent = okLabel || 'OK';
+  d.showModal(); $('#cfOk').focus();
+  return new Promise(res => { answer = res; });
+}
+function answerConfirm(yes) {
+  const res = answer; answer = null;
+  if ($('#confirm').open) $('#confirm').close();
+  res?.(yes);
+}
+$('#cfOk').onclick = () => answerConfirm(true);
+$('#cfNo').onclick = () => answerConfirm(false);
+$('#confirm').addEventListener('cancel', () => answerConfirm(false));   // Esc
+
+$('#edForm').addEventListener('submit', saveEditor);
+$('#edCancel').onclick = () => $('#editor').close();
+$('#edDelete').onclick = () => deleteItem(editing);
+$('#edSecret').onchange = e => setSecretMode(e.target.checked);
+$('#edPeek').onclick = () => { const p = $('#edPw'); p.type = p.type === 'password' ? 'text' : 'password'; };
+$('#edTags').addEventListener('input', renderTagSugg);
+$('#editor').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$('#confirm').addEventListener('click', e => { if (e.target === e.currentTarget) answerConfirm(false); });
+
+// ---------- events (delegated: one listener for every tile) ----------
 $('#app').addEventListener('click', e => {
+  const add = e.target.closest('.add'); if (add) { openEditor(null, add.dataset.section); return; }
   const btn = e.target.closest('.tile'); if (!btn) return;
   if (e.target.closest('.pin')) { e.stopPropagation(); togglePin(btn.dataset.id); return; }
+  if (e.target.closest('.edit')) { e.stopPropagation(); openEditor(byId.get(btn.dataset.id)); return; }
   copyTile(btn);
 });
 $('#q').addEventListener('input', () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => render()); });
@@ -405,30 +798,49 @@ function moveFocus(cur, key) {
 }
 
 document.addEventListener('keydown', e => {
-  const inSearch = document.activeElement === $('#q');
-  if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !inSearch)) { e.preventDefault(); $('#q').focus(); $('#q').select(); return; }
+  if (document.querySelector('dialog[open]')) return;
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
+  if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) { e.preventDefault(); $('#q').focus(); $('#q').select(); return; }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openEditor(null); return; }
   const cur = document.activeElement?.closest?.('.tile');
   if (!cur) return;
+  const item = byId.get(cur.dataset.id);
   if (e.key.startsWith('Arrow')) { e.preventDefault(); const n = moveFocus(cur, e.key); if (n) { n.focus(); n.scrollIntoView?.({ block:'nearest' }); } }
   else if (e.key === 'p' || e.key === 'P') togglePin(cur.dataset.id);
+  else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); openEditor(item); }
+  else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteItem(item); }
   else if (e.key === 'Escape') $('#q').focus();
 });
 
 for (const b of document.querySelectorAll('#groupBy button')) b.onclick = () => { groupBy = b.dataset.g; LS.set('groupBy', groupBy); render(); };
-for (const id of ['#open','#open2']) $(id).onclick = () => $('#file').click();
+$('#open').onclick = $('#open2').onclick = () => openFile();
+$('#reload').onclick = () => reloadJSON();
+$('#new').onclick = () => openEditor(null);
+$('#new2').onclick = () => { if (!items.length) parse({}); openEditor(null); };
 $('#file').onchange = e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ''; };
 $('#theme').onclick = () => {
   const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = cur === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; LS.set('theme', next);
 };
 const th = LS.get('theme', null); if (th) document.documentElement.dataset.theme = th;
-// when served over http(s), pick up edits to snippets.json whenever you come back to the tab
-document.addEventListener('visibilitychange', () => { if (!document.hidden && served) fetchSnippets(true).catch(() => {}); });
+// coming back to the tab picks up edits made to snippets.json in another editor (never overwrites unsaved edits)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || dirty) return;
+  if (handle) readHandle(false).catch(() => {});
+  else if (served) fetchSnippets().catch(() => {});
+});
 let dragN = 0;
 addEventListener('dragenter', e => { e.preventDefault(); dragN++; $('#drop').style.display = 'flex'; });
 addEventListener('dragleave', () => { if (--dragN <= 0) $('#drop').style.display = 'none'; });
 addEventListener('dragover', e => e.preventDefault());
-addEventListener('drop', e => { e.preventDefault(); dragN = 0; $('#drop').style.display = 'none'; const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
+addEventListener('drop', async e => {
+  e.preventDefault(); dragN = 0; $('#drop').style.display = 'none';
+  const it = e.dataTransfer.items?.[0];
+  // Chrome/Edge: a dropped file can become the connected, writable file
+  if (FS && it?.getAsFileSystemHandle) { try { const h = await it.getAsFileSystemHandle(); if (h?.kind === 'file') { await useHandle(h); toast(`Loaded ${h.name}`); return; } } catch {} }
+  const f = e.dataTransfer.files[0]; if (f) loadFile(f);
+});
 init();
 </script>
 </body>
