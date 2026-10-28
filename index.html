@@ -76,16 +76,28 @@
   .tile:focus-visible { outline:3px solid var(--text); outline-offset:2px }
   .tile:active { transform:scale(.97) }
   .ico { font-size:20px; line-height:1 }
-  .k { font-weight:800; font-size:15.5px; line-height:1.25; padding-right:44px; text-shadow:0 1px 2px rgba(0,0,0,.12) }
+  .k { font-weight:800; font-size:15.5px; line-height:1.25; text-shadow:0 1px 2px rgba(0,0,0,.12) }
   .v { font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
   .v.hid { letter-spacing:.12em }
   .tags { margin-top:auto; padding-top:4px; display:flex; gap:5px; flex-wrap:wrap }
   .tags i { font-style:normal; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; background:rgba(255,255,255,.24) }
-  .act { position:absolute; top:7px; font-size:15px; width:26px; height:26px; display:grid; place-items:center; border-radius:8px; opacity:0; transition:opacity .15s, background .15s; color:#fff }
-  .act:hover { background:rgba(255,255,255,.22) }
-  .pin { right:7px } .edit { right:34px }
-  .tile:hover .act, .tile:focus-visible .act, .pin.on { opacity:.95 }
-  @media (hover:none) { .act { opacity:.7 } }
+  /* edit mode: same tiles, clicking edits instead of copying */
+  body.editing .tile { outline:2px dashed rgba(255,255,255,.55); outline-offset:-6px }
+  body.editing .tile::after { content:"✎ Edit"; position:absolute; top:9px; right:10px; font-size:11px; font-weight:800; padding:2px 8px; border-radius:99px; background:rgba(0,0,0,.25) }
+  body.editing .k { padding-right:56px }
+  #manage { max-width:1240px; margin:0 auto; padding:0 16px 12px; display:none }
+  body.editing #manage { display:block }
+  #manage div { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:9px 12px; border-radius:12px; background:rgba(139,92,246,.14); border:1px solid rgba(139,92,246,.4); font-size:13.5px; font-weight:600 }
+  #manage span { flex:1; min-width:200px }
+  .btn.on { background:var(--text); color:var(--bg); border-color:transparent }
+  /* right-click menu */
+  #menu { position:fixed; z-index:30; min-width:190px; padding:6px; border-radius:14px; background:var(--solid); border:1px solid var(--border); box-shadow:0 18px 40px -12px rgba(0,0,0,.5); display:none }
+  #menu.show { display:block }
+  #menu button { display:flex; width:100%; gap:10px; align-items:center; border:0; background:none; color:var(--text); font:inherit; font-size:14px; font-weight:600; padding:8px 10px; border-radius:9px; cursor:pointer; text-align:left }
+  #menu button:hover, #menu button:focus-visible { background:var(--field); outline:none }
+  #menu button.danger { color:#f43f5e }
+  #menu hr { border:0; border-top:1px solid var(--border); margin:5px 4px }
+  #menu .head { padding:6px 10px 4px; font-size:12px; color:var(--muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px }
   .done { position:absolute; inset:0; display:grid; place-items:center; font-weight:800; font-size:16px; background:rgba(10,10,20,.45); opacity:0; transition:opacity .15s; pointer-events:none }
   .tile.copied .done { opacity:1 }
   .add { min-height:112px; border:2px dashed var(--border); border-radius:18px; background:transparent; color:var(--muted); font:inherit; font-weight:700; cursor:pointer }
@@ -150,12 +162,17 @@
     <div class="seg" id="groupBy" title="Group tiles by">
       <button type="button" data-g="section">Sections</button><button type="button" data-g="tag">Tags</button><button type="button" data-g="none">All</button>
     </div>
-    <button type="button" class="btn primary" id="new" title="Add a new tile (N)">＋ New</button>
     <button type="button" class="btn" id="reload" title="Reload snippets.json from disk">⟳ Reload JSON</button>
-    <button type="button" class="btn" id="open" title="Open a different JSON file">Load JSON</button>
+    <button type="button" class="btn" id="editBtn" title="Add, edit or delete tiles">✎ Edit</button>
     <button type="button" class="btn" id="theme" title="Toggle light / dark">◐</button>
   </div>
   <div class="chips" id="chips"></div>
+  <div id="manage"><div>
+    <span>Edit mode — click a tile to edit it.</span>
+    <button type="button" class="btn primary" id="new">＋ New tile</button>
+    <button type="button" class="btn" id="open" title="Open a different JSON file">Load JSON</button>
+    <button type="button" class="btn" id="doneEdit">Done</button>
+  </div></div>
   <div id="notice"><div><span id="noticeMsg"></span><span id="noticeBtns" style="flex:none;display:flex;gap:8px;min-width:0"></span></div></div>
 </header>
 <main>
@@ -165,8 +182,10 @@
     <button type="button" class="btn primary" id="open2">Choose snippets.json</button>
     <button type="button" class="btn" id="new2">＋ Start a new list</button>
   </div>
-  <p class="help"><kbd>/</kbd> search · <kbd>↑↓←→</kbd> move · <kbd>Enter</kbd> copy · <kbd>E</kbd> edit · <kbd>P</kbd> pin · <kbd>Del</kbd> delete · <kbd>N</kbd> new</p>
+  <p class="help">Click a tile to copy · right-click for edit, pin and delete · <kbd>/</kbd> search · <kbd>↑↓←→</kbd> move · <kbd>Enter</kbd> copy</p>
 </main>
+
+<div id="menu" role="menu"></div>
 
 <dialog id="editor">
   <form method="dialog" id="edForm" autocomplete="off">
@@ -255,6 +274,7 @@ let pins = new Set(LS.get('pins', []));
 let recent = LS.get('recent', []);
 let activeTags = new Set(LS.get('tags', []));
 let groupBy = null, toastTimer, frame = 0;
+let editMode = false;              // clicking a tile edits it instead of copying
 let handle = null;                 // FileSystemFileHandle of the connected snippets.json (Chrome/Edge)
 let dirty = LS.get('dirty', false);  // edits not yet written to a file
 let needsConnect = false;          // showing the saved copy; the file needs one click to re-open
@@ -409,9 +429,6 @@ function tile(item) {
     const tg = el('tags', '');
     for (const t of item.tags) { const i = document.createElement('i'); i.textContent = tagInfo(t).label; tg.appendChild(i); }
   }
-  const pinned = pins.has(item.id);
-  el('act edit', '✎').title = 'Edit (E)';
-  el('act pin' + (pinned ? ' on' : ''), pinned ? '★' : '☆').title = 'Pin to top (P)';
   el('done', '✓ Copied');
   return btn;
 }
@@ -457,7 +474,7 @@ function render(focusId) {
     }
     const grid = document.createElement('div'); grid.className = 'grid';
     for (const item of g.items) grid.appendChild(tile(item));
-    if (!words.length && !activeTags.size && groupBy === 'section' && g.section !== undefined) {
+    if (editMode && !words.length && !activeTags.size && groupBy === 'section' && g.section !== undefined) {
       const add = document.createElement('button'); add.type = 'button'; add.className = 'add';
       add.textContent = '＋ Add tile'; add.dataset.section = g.section; grid.appendChild(add);
     }
@@ -770,10 +787,58 @@ $('#confirm').addEventListener('click', e => { if (e.target === e.currentTarget)
 $('#app').addEventListener('click', e => {
   const add = e.target.closest('.add'); if (add) { openEditor(null, add.dataset.section); return; }
   const btn = e.target.closest('.tile'); if (!btn) return;
-  if (e.target.closest('.pin')) { e.stopPropagation(); togglePin(btn.dataset.id); return; }
-  if (e.target.closest('.edit')) { e.stopPropagation(); openEditor(byId.get(btn.dataset.id)); return; }
-  copyTile(btn);
+  if (editMode) openEditor(byId.get(btn.dataset.id)); else copyTile(btn);
 });
+
+// ---------- right-click menu ----------
+function closeMenu() { $('#menu').classList.remove('show'); }
+function openMenu(x, y, item) {
+  const m = $('#menu'), rows = [];
+  const head = document.createElement('div'); head.className = 'head'; head.textContent = item.key; rows.push(head);
+  const row = (label, fn, cls) => {
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
+    b.textContent = label; if (cls) b.className = cls;
+    b.onclick = () => { closeMenu(); fn(); }; rows.push(b);
+  };
+  row('📋  Copy', () => { const t = [...document.querySelectorAll('.tile')].find(t => t.dataset.id === item.id); if (t) copyTile(t); });
+  row('✎  Edit…', () => openEditor(item));
+  row(pins.has(item.id) ? '☆  Unpin' : '★  Pin to top', () => togglePin(item.id));
+  row('🗑  Delete…', () => deleteItem(item), 'danger');
+  rows.push(document.createElement('hr'));
+  row('＋  New tile', () => openEditor(null, item.section));
+  m.replaceChildren(...rows);
+  m.classList.add('show');
+  const w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+  m.querySelector('button').focus({ preventScroll:true });
+}
+$('#app').addEventListener('contextmenu', e => {
+  const btn = e.target.closest('.tile'); if (!btn) return;   // anywhere else keeps the normal browser menu
+  e.preventDefault();
+  const r = btn.getBoundingClientRect();
+  openMenu(e.clientX || r.left + 20, e.clientY || r.top + 20, byId.get(btn.dataset.id));
+});
+addEventListener('pointerdown', e => { if (!e.target.closest('#menu')) closeMenu(); });
+addEventListener('scroll', closeMenu, { passive:true });
+addEventListener('resize', closeMenu);
+addEventListener('blur', closeMenu);
+$('#menu').addEventListener('keydown', e => {
+  const bs = [...$('#menu').querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeMenu(); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); bs[(i + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length].focus(); }
+});
+
+// ---------- edit mode ----------
+function setEditMode(on) {
+  editMode = on;
+  document.body.classList.toggle('editing', on);
+  $('#editBtn').classList.toggle('on', on);
+  $('#editBtn').textContent = on ? '✓ Done' : '✎ Edit';
+  render();
+}
+$('#editBtn').onclick = () => setEditMode(!editMode);
+$('#doneEdit').onclick = () => setEditMode(false);
 $('#q').addEventListener('input', () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => render()); });
 $('#q').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); const t = $('.tile'); if (t) copyTile(t); }
@@ -798,7 +863,8 @@ function moveFocus(cur, key) {
 }
 
 document.addEventListener('keydown', e => {
-  if (document.querySelector('dialog[open]')) return;
+  if (document.querySelector('dialog[open]') || $('#menu').classList.contains('show')) return;
+  if (e.key === 'Escape' && editMode && document.activeElement !== $('#q')) { setEditMode(false); return; }
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
   if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) { e.preventDefault(); $('#q').focus(); $('#q').select(); return; }
   if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
